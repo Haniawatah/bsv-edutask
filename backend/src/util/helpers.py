@@ -34,7 +34,7 @@ class ValidationHelper:
 
         if user['age'] < 0 or user['age'] > 120:
             return "invalid"
-        if user['age'] > 18:
+        if user['age'] >= 18:
             return "valid"
         return "underaged"
 
@@ -59,7 +59,7 @@ class ValidationHelper2:
 
         if user['age'] < 0 or user['age'] > 120:
             return "invalid"
-        if user['age'] > 18:
+        if user['age'] >= 18:
             return "valid"
         return "underaged"
 
@@ -72,6 +72,6 @@ def diceroll():
     """
     number = random.randint(1, 6)
 
-    if number >= 4:
+    if number > 4:
         return True
     return False
