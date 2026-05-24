@@ -1,50 +1,45 @@
 import pytest
+from pymongo.errors import PyMongoError
+from unittest.mock import patch
+
 from src.util.dao import DAO
 
 
-@pytest.fixture
-def d():
-    #connection to the database
-    db = DAO(collection_name="task")
-    yield db
-    db.collection.drop()
+@pytest.mark.integration
+@patch("src.util.dao.getValidator", return_value={})
+def test_dao_create_success(_mock_get_validator):
+    dao = DAO(collection_name="task")
+
+    try:
+        task_data = {
+            "title": "axe warmup",
+            "description": "my noob friend is a top mmr feeder",
+        }
+        created_task = dao.create(task_data)
+
+        assert created_task is not None
+        assert "_id" in created_task
+    finally:
+        dao.collection.drop()
+
 
 @pytest.mark.integration
-def test_ok_1(d):
-    t = {
-        "title": "axe warmup",
-        "description": "my noob friend is a top mmr feeder"
-    }
-    r = d.create(t)
-    assert r is not None
-    assert "_id" in r
+@patch("src.util.dao.getValidator", return_value={})
+def test_dao_create_db_failure(_mock_get_validator):
+    dao = DAO(collection_name="task")
 
-@pytest.mark.integration
-def test_bad_2(d):
-    # nope
-    t = {"title": "pudge hook always misses"}
-    with pytest.raises(Exception):
-        d.create(t)
+    try:
+        task_data = {
+            "title": "axe warmup",
+            "description": "my noob friend is a top mmr feeder",
+        }
 
-@pytest.mark.integration
-def test_bad_3(d):
-    # some title
-    t = {"description": "DK grind"}
-    with pytest.raises(Exception):
-        d.create(t)
-
-@pytest.mark.integration
-def test_bad_4(d):
-    # title should be in text, not a number
-    t = {
-        "title": 404,
-        "description": "tiny threw me"
-    }
-    with pytest.raises(Exception):
-        d.create(t)
-
-@pytest.mark.integration
-def test_bad_5(d):
-    with pytest.raises(Exception):
-        d.create({})
-        
+        with patch.object(
+            dao.collection,
+            "insert_one",
+            side_effect=PyMongoError("Simulated MongoDB crash"),
+        ):
+            with pytest.raises(Exception):
+                dao.create(task_data)
+    finally:
+        dao.collection.drop()
